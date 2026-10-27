@@ -1,0 +1,47 @@
+name: Publish To PyPI
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install build twine
+      - run: python -m build
+      - run: python -m twine check dist/*
+      - run: python -m pip install dist/*.whl
+      - run: veg-train --help
+      - name: Test Delta Memory And Gradients
+        working-directory: veg
+        run: |
+          python -m unittest test_delta_memory
+          VEG_F64=1 python veg3.py --memory delta --gradcheck
+          VEG_F64=1 python veg3.py --memory resonance --gradcheck
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-distributions
+          path: dist/
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/veyrian-veg
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-distributions
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

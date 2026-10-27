@@ -22,6 +22,27 @@ python -m pip install .
 python -m pip install '.[gpu]'
 ```
 
+The PyPI distribution name is `veyrian-veg`, not `veg-train`. Once the first
+PyPI release is published, install with `python -m pip install veyrian-veg`.
+The installed terminal command remains `veg-train`.
+
+### Publishing (Maintainers)
+
+The `Publish To PyPI` GitHub Actions workflow builds, tests and publishes via
+PyPI Trusted Publishing (no API token stored in GitHub).
+For the first release, register a pending publisher at
+https://pypi.org/manage/account/publishing/ with:
+
+- PyPI project: `veyrian-veg`
+- GitHub owner: `A-Proof`
+- Repository: `veg`
+- Workflow filename: `publish.yml`
+- Environment: `pypi`
+
+Then run the workflow manually from GitHub Actions, or publish a GitHub release.
+Later releases must increment `version` in `pyproject.toml`; PyPI versions
+cannot be overwritten. PyPI account setup requires the project owner's login.
+
 ## Train
 
 Supply your own UTF-8 byte corpora, split by document into train and validation.
