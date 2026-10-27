@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "veyrian-veg"
+version = "0.1.0"
+description = "Experimental phase-driven text generation with prediction-error memory"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.26"]
+
+[project.optional-dependencies]
+gpu = ["cupy-cuda12x>=13"]
+test = ["safetensors>=0.4"]
+
+[project.scripts]
+veg-train = "veg.veg3:main"
+
+[tool.setuptools]
+packages = ["veg"]

@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+*.bin
+*.npz
+*.safeveyra
+*.safetensors
+*.log
+.env
+.env.*
+.DS_Store
