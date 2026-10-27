@@ -42,9 +42,15 @@ jobs:
       max-parallel: 1
       fail-fast: false
       matrix:
-        project: [veg_core, veg_train, veg_infer]
+        include:
+          - project: veg_core
+            environment: pypi-veg-core
+          - project: veg_train
+            environment: pypi-veg-train
+          - project: veg_infer
+            environment: pypi-veg-infer
     environment:
-      name: pypi
+      name: ${{ matrix.environment }}
       url: https://pypi.org/p/veg-core
     permissions:
       id-token: write

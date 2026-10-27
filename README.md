@@ -49,7 +49,9 @@ https://pypi.org/manage/account/publishing/ with:
 - GitHub owner: `A-Proof`
 - Repository: `veg`
 - Workflow filename: `publish.yml`
-- Environment: `pypi`
+- Environment: `pypi-veg-core`, `pypi-veg-train` or `pypi-veg-infer`,
+  matching the respective project. Distinct environments prevent ambiguous
+  token scoping when publishing multiple projects from the same workflow.
 
 Then run the workflow manually from GitHub Actions, or publish a GitHub release.
 Later releases must increment `version` in `pyproject.toml`; PyPI versions
