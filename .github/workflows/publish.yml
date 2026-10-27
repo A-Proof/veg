@@ -38,6 +38,11 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        project: [veg_core, veg_train, veg_infer]
     environment:
       name: pypi
       url: https://pypi.org/p/veg-core
@@ -48,4 +53,15 @@ jobs:
         with:
           name: python-distributions
           path: dist/
+      - name: Select One Project Per Scoped Token
+        env:
+          PROJECT: ${{ matrix.project }}
+        run: |
+          mkdir publish
+          cp dist/"${PROJECT}"-*.tar.gz publish/
+          if [ "$PROJECT" != veg_core ]; then
+            cp dist/"${PROJECT}"-*.whl publish/
+          fi
       - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: publish/
