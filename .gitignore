@@ -13,3 +13,5 @@ dist/
 .env
 .env.*
 .DS_Store
+*.so
+*.pyd

@@ -17,23 +17,35 @@ These are research models, not validated frontier systems or brain simulations.
 ## Install
 
 ```sh
-python -m pip install .
-# Optional CUDA 12 GPU backend:
+# Once published on PyPI:
+python -m pip install veg-train veg-infer
+# Both automatically install veg-core==0.2.0.
+
+# From a source checkout (available now):
+python -m pip install . ./packages/train ./packages/infer
+# Optional CUDA 12 GPU backend for core:
 python -m pip install '.[gpu]'
 ```
 
-The PyPI distribution name is `veyrian-veg`, not `veg-train`. Once the first
-PyPI release is published, install with `python -m pip install veyrian-veg`.
-The installed terminal command remains `veg-train`.
+`veg-core` provides the Python `veg` library. `veg-train` and `veg-infer` provide
+their respective terminal commands and depend on the exact core release.
+These names replace the initial, unpublished `veyrian-veg` distribution.
+
+An optional C extension fuses the CPU delta-memory forward scan and releases
+the Python GIL. Source installations need a C compiler to enable it; otherwise
+NumPy is used. Set `VEG_NONATIVE=1` to compare with the reference path. The
+backward pass remains NumPy, so this is not a complete native trainer or CUDA
+speedup. Tests compare C outputs and analytical gradients with the reference
+in float32 and float64. No faster statistical learning is established.
 
 ### Publishing (Maintainers)
 
 The `Publish To PyPI` GitHub Actions workflow builds, tests and publishes via
 PyPI Trusted Publishing (no API token stored in GitHub).
-For the first release, register a pending publisher at
+For the first release, register three pending publishers at
 https://pypi.org/manage/account/publishing/ with:
 
-- PyPI project: `veyrian-veg`
+- PyPI projects (one registration each): `veg-core`, `veg-train`, `veg-infer`
 - GitHub owner: `A-Proof`
 - Repository: `veg`
 - Workflow filename: `publish.yml`
@@ -41,7 +53,10 @@ https://pypi.org/manage/account/publishing/ with:
 
 Then run the workflow manually from GitHub Actions, or publish a GitHub release.
 Later releases must increment `version` in `pyproject.toml`; PyPI versions
-cannot be overwritten. PyPI account setup requires the project owner's login.
+cannot be overwritten. Keep all three project versions and their exact core
+dependencies in sync. PyPI account setup requires the project owner's login.
+The workflow uploads all three distributions; none is published until PyPI
+authorization is configured.
 
 ## Train
 
@@ -82,7 +97,10 @@ Exporting tensors does not convert VEG into a Transformer or provide
 ```sh
 veg-train --to-safetensors experiment.safeveyra experiment.safetensors
 veg-train --load experiment.safeveyra --steps 0 --gen "The "
+veg-infer --load experiment.safeveyra --prompt "The " --length 200
 ```
+
+`veg-infer` needs only a checkpoint, not training or validation data.
 
 Checkpoint saving currently persists weights/configuration, not optimizer or
 random-generator state: loading is a warm start, not exact training resumption.

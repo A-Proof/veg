@@ -38,8 +38,9 @@ comparison needs the same source checkpoint for both arms.
     python veg3.py --size S --memory delta --steps 400 --rows 8
     python veg3.py --size S --memory resonance --steps 400 --rows 8
 
-The delta path is a correctness reference: it loops over positions and caches
-memory states for analytical BPTT. Forward work is linear in sequence length
+The delta path caches memory states for analytical BPTT. An optional C
+extension fuses the CPU forward loop, with a NumPy fallback; backward remains
+NumPy/CuPy. Forward work is linear in sequence length
 for fixed dimensions, but training cache memory is O(batch * heads * time *
 feature_width * value_width). It may be slower and use more memory than the
 existing GPU implementation. A fused/chunked implementation is required before

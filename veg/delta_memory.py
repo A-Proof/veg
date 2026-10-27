@@ -3,6 +3,18 @@
 Inputs use [batch, heads, time, channels]. No learned parameters are added.
 The implementation caches states for BPTT; it is not the production GPU kernel.
 """
+import os
+
+try:
+    if __package__:
+        from . import _native
+    else:
+        try:
+            import _native
+        except ImportError:
+            from veg import _native
+except ImportError:
+    _native = None
 
 
 def normalize(np, x):
@@ -20,12 +32,21 @@ def forward(np, phase, q, k, v):
     state = np.zeros((*v.shape[:2], key.shape[-1], v.shape[-1]), dtype=v.dtype)
     out = np.empty_like(v)
     history = []
-    for t in range(v.shape[2]):
-        kt, qt = key[:, :, t], query[:, :, t]
-        error = v[:, :, t] - (kt[..., None] * state).sum(-2)
-        history.append((state, error))
-        state = state + kt[..., None] * (beta[:, :, t] * error)[..., None, :]
-        out[:, :, t] = (qt[..., None] * state).sum(-2)
+    if (_native is not None and np.__name__ == 'numpy'
+            and not os.environ.get('VEG_NONATIVE') and v.dtype.name in ('float32', 'float64')):
+        states = np.empty((*v.shape[:3], key.shape[-1], v.shape[-1]), dtype=v.dtype)
+        errors = np.empty_like(v, order='C')
+        out = np.empty_like(v, order='C')
+        _native.delta_forward(*(np.ascontiguousarray(a) for a in (query, key, beta, v)),
+                              out, states, errors, state)
+        history = [(states[:, :, t], errors[:, :, t]) for t in range(v.shape[2])]
+    else:
+        for t in range(v.shape[2]):
+            kt, qt = key[:, :, t], query[:, :, t]
+            error = v[:, :, t] - (kt[..., None] * state).sum(-2)
+            history.append((state, error))
+            state = state + kt[..., None] * (beta[:, :, t] * error)[..., None, :]
+            out[:, :, t] = (qt[..., None] * state).sum(-2)
     return out, (phase, tq, tk, query, key, qs, ks, beta, history, state)
 
 

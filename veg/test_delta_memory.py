@@ -1,5 +1,7 @@
 """CPU regression checks: python -m unittest test_delta_memory."""
 import unittest
+import os
+from unittest.mock import patch
 
 import numpy as np
 
@@ -39,6 +41,20 @@ class DeltaMemoryTests(unittest.TestCase):
         out, _ = dm.forward(np, phase, code, code, value)
         self.assertLess(abs(float(out[0, 0, -1, 0]) - 1), 1e-5)
         self.assertLessEqual(float(out.max()), 1.000001)
+
+    @unittest.skipIf(dm._native is None, 'Optional C extension is not built')
+    def test_native_matches_reference(self):
+        for dtype, tolerance in ((np.float32, 2e-6), (np.float64, 1e-12)):
+            inputs = [a.astype(dtype) for a in self.inputs]
+            with patch.dict(os.environ, {'VEG_NONATIVE': ''}):
+                actual, cache = dm.forward(np, *inputs)
+                gradients = dm.backward(np, self.dy.astype(dtype), cache)
+            with patch.dict(os.environ, {'VEG_NONATIVE': '1'}):
+                expected, cache = dm.forward(np, *inputs)
+                reference = dm.backward(np, self.dy.astype(dtype), cache)
+            np.testing.assert_allclose(actual, expected, atol=tolerance, rtol=tolerance)
+            for a, b in zip(gradients, reference):
+                np.testing.assert_allclose(a, b, atol=tolerance, rtol=tolerance)
 
 
 if __name__ == '__main__':
